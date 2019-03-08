@@ -28,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     FlingAnimation flingY;
     private static final float FLING_MIN_TRANSLATION = 0;
     private static final float FLING_FRICTION = 0.000001f;
+    int boxWidthHalf;
+    int boxHeightHalf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +64,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ivBox.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                boxWidthHalf = ivBox.getWidth() / 2;
+                boxHeightHalf = ivBox.getHeight() / 2;
+                ivBox.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
 
     }
 
@@ -78,22 +88,33 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "distanceX:" + distanceX + " X:" + moveEvent.getX() + " RawX:" + moveEvent.getRawX());
             Log.d(TAG, "distanceY:" + distanceY + " Y:" + moveEvent.getY() + " RawY:" + moveEvent.getRawY());
 
-            ivBox.setTranslationX(moveEvent.getRawX() - (ivBox.getWidth() / 2));
-            ivBox.setTranslationY(moveEvent.getRawY() + extraHeight - (ivBox.getHeight() / 2));
+            /*if (moveEvent.getRawX() >= boxWidthHalf && moveEvent.getRawX() <= (maxTranslationX + boxWidthHalf)) {
+                ivBox.setTranslationX(moveEvent.getRawX() - boxWidthHalf);
+            }
+
+            if (moveEvent.getRawY() >= (ivBox.getHeight()) && moveEvent.getRawY() <= (maxTranslationY + ivBox.getHeight() - 20)) {
+                ivBox.setTranslationY(moveEvent.getRawY() + extraHeight - boxHeightHalf);
+            }*/
 
             return super.onScroll(downEvent, moveEvent, distanceX, distanceY);
         }
 
         @Override
-        public boolean onDown(MotionEvent arg0) {
+        public boolean onDown(MotionEvent e) {
             Log.d(TAG, "onDown: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            Log.d(TAG, "RawX: " + arg0.getRawX() + " X: " + arg0.getX());
-            Log.d(TAG, "RawY: " + arg0.getRawY() + " NewY: " + (arg0.getRawY()) + " Y: " + arg0.getY());
+            Log.d(TAG, "RawX: " + e.getRawX() + " X: " + e.getX());
+            Log.d(TAG, "RawY: " + e.getRawY() + " NewY: " + (e.getRawY()) + " Y: " + e.getY());
 
             cancelFling();
 
-            ivBox.setTranslationX(arg0.getRawX() - (ivBox.getWidth() / 2));
-            ivBox.setTranslationY(arg0.getRawY() + extraHeight - (ivBox.getHeight() / 2));
+            if (e.getRawX() >= boxWidthHalf && e.getRawX() <= (maxTranslationX + boxWidthHalf)) {
+                ivBox.setTranslationX(e.getRawX() - boxWidthHalf);
+            }
+
+            if (e.getRawY() >= (ivBox.getHeight()) && e.getRawY() <= (maxTranslationY + ivBox.getHeight() - 20)) {
+                ivBox.setTranslationY(e.getRawY() + extraHeight - boxHeightHalf);
+            }
+
             return true;
         }
 
@@ -144,6 +165,10 @@ public class MainActivity extends AppCompatActivity {
     private void doFling(float velocityX, float velocityY) {
         Log.d(TAG, "doFling: velocityX: " + velocityX + " velocityY:" + velocityY);
         cancelFling();
+
+        /*if (velocityX <= 0 || velocityY <= 0) {
+            return;
+        }*/
 
         flingX.setStartVelocity(velocityX)
                 .setMinValue(FLING_MIN_TRANSLATION) // minimum translationX property
