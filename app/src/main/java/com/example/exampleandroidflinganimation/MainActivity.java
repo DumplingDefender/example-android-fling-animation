@@ -1,0 +1,136 @@
+package com.example.exampleandroidflinganimation;
+
+import android.os.Bundle;
+import android.support.animation.DynamicAnimation;
+import android.support.animation.FlingAnimation;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.ImageView;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+
+    private int maxTranslationX;
+    private int maxTranslationY;
+
+    ViewGroup mainLayout;
+    ImageView ivBox;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mainLayout = findViewById(R.id.layout_main);
+        ivBox = findViewById(R.id.image_box);
+
+        final GestureDetector gestureDetector = new GestureDetector(this, mGestureListener);
+
+        ivBox.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gestureDetector.onTouchEvent(event);
+            }
+        });
+
+        mainLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                maxTranslationX = mainLayout.getWidth() - ivBox.getWidth();
+                maxTranslationY = mainLayout.getHeight() - ivBox.getHeight();
+                //As only wanted the first call back, so now remove the listener
+                mainLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
+
+
+    }
+
+    private GestureDetector.OnGestureListener mGestureListener = new GestureDetector.SimpleOnGestureListener() {
+
+        //Constants
+        private static final int MIN_DISTANCE_MOVED = 50;
+        private static final float MIN_TRANSLATION = 0;
+        private static final float FRICTION = 1.1f;
+
+        @Override
+        public boolean onDown(MotionEvent arg0) {
+            return true;
+        }
+
+        @Override
+        public boolean onFling(MotionEvent downEvent, MotionEvent moveEvent, float velocityX, float velocityY) {
+            //downEvent : when user puts his finger down on the view
+            //moveEvent : when user lifts his finger at the end of the movement
+            float distanceInX = Math.abs(moveEvent.getRawX() - downEvent.getRawX());
+            float distanceInY = Math.abs(moveEvent.getRawY() - downEvent.getRawY());
+
+            Log.d(TAG, "onFling: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+            Log.d(TAG, "distanceInX : " + distanceInX + "\n" + "distanceInY : " + distanceInY);
+
+            if (distanceInX > MIN_DISTANCE_MOVED) {
+                //Fling Right/Left
+                FlingAnimation flingX = new FlingAnimation(ivBox, DynamicAnimation.TRANSLATION_X);
+                flingX.setStartVelocity(velocityX)
+                        .setMinValue(MIN_TRANSLATION) // minimum translationX property
+                        .setMaxValue(maxTranslationX)  // maximum translationX property
+                        .setFriction(FRICTION)
+                        .start();
+            } else if (distanceInY > MIN_DISTANCE_MOVED) {
+                //Fling Down/Up
+                FlingAnimation flingY = new FlingAnimation(ivBox, DynamicAnimation.TRANSLATION_Y);
+                flingY.setStartVelocity(velocityY)
+                        .setMinValue(MIN_TRANSLATION)  // minimum translationY property
+                        .setMaxValue(maxTranslationY) // maximum translationY property
+                        .setFriction(FRICTION)
+                        .start();
+            }
+
+            return true;
+        }
+    };
+
+    private void oldMethod() {
+        final FlingAnimation flingAnimation = new FlingAnimation(ivBox, DynamicAnimation.TRANSLATION_Y);
+        flingAnimation.setStartVelocity(2000);
+        flingAnimation.setFriction(0.000001f);
+        flingAnimation.setMinValue(0);
+        flingAnimation.setMaxValue(1500);
+
+        ivBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (flingAnimation.isRunning()) {
+                    flingAnimation.cancel();
+                } else {
+                    flingAnimation.start();
+                }
+            }
+        });
+
+        flingAnimation.addEndListener(new DynamicAnimation.OnAnimationEndListener() {
+            @Override
+            public void onAnimationEnd(DynamicAnimation dynamicAnimation, boolean cancelled, float value, float velocity) {
+                Log.d(TAG, "onAnimationEnd: ");
+                Log.d(TAG, "cancelled: " + cancelled);
+                Log.d(TAG, "value: " + value);
+                Log.d(TAG, "velocity: " + velocity);
+                flingAnimation.cancel();
+            }
+        });
+
+        flingAnimation.addUpdateListener(new DynamicAnimation.OnAnimationUpdateListener() {
+            @Override
+            public void onAnimationUpdate(DynamicAnimation dynamicAnimation, float value, float velocity) {
+                Log.d(TAG, "onAnimationUpdate: v : " + value);
+                Log.d(TAG, "onAnimationUpdate: v1 : " + velocity);
+            }
+        });
+    }
+}
